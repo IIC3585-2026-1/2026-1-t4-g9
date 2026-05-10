@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#111318" />
+  <meta name="description" content="Divide gastos entre amigos de forma simple" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="DividApp" />
+  <title>DividApp</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- ══ VISTA: HOME ══ -->
+  <div id="view-home" class="view active">
+    <header class="app-header">
+      <div class="logo">
+        <span class="logo-icon">÷</span>
+        <span class="logo-text">DividApp</span>
+      </div>
+      <button class="btn-icon" id="btn-notification" title="Activar notificaciones" aria-label="Activar notificaciones">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+      </button>
+    </header>
+
+    <main class="home-main">
+      <div class="home-hero">
+        <p class="hero-label">tus eventos</p>
+        <h1 class="hero-title">Divide gastos,<br/>no amistades.</h1>
+      </div>
+
+      <div id="events-empty" class="empty-state">
+        <div class="empty-icon">◎</div>
+        <p>No tienes eventos aún.<br/>Crea uno para empezar.</p>
+      </div>
+
+      <div id="events-list" class="events-list"></div>
+
+      <button class="btn-fab" id="btn-new-event" aria-label="Crear nuevo evento">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Nuevo evento
+      </button>
+    </main>
+  </div>
+
+  <!-- ══ VISTA: EVENTO ══ -->
+  <div id="view-event" class="view">
+    <header class="app-header">
+      <button class="btn-back" id="btn-back" aria-label="Volver">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+      <span id="event-header-title" class="header-title"></span>
+      <div style="width:36px"></div>
+    </header>
+
+    <main class="event-main">
+      <section class="event-summary">
+        <div class="summary-card">
+          <span class="summary-label">Total gastado</span>
+          <span class="summary-amount" id="summary-total">$0</span>
+        </div>
+        <div class="summary-card">
+          <span class="summary-label">Participantes</span>
+          <span class="summary-amount" id="summary-members">0</span>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-header">
+          <h2 class="section-title">Participantes</h2>
+          <button class="btn-sm" id="btn-add-member">+ Agregar</button>
+        </div>
+        <div id="members-list" class="members-list"></div>
+      </section>
+
+      <section class="section">
+        <div class="section-header">
+          <h2 class="section-title">Gastos</h2>
+          <button class="btn-sm" id="btn-add-tx">+ Nuevo gasto</button>
+        </div>
+        <div id="tx-list" class="tx-list"></div>
+        <div id="tx-empty" class="tx-empty">Sin gastos registrados aún.</div>
+      </section>
+
+      <section class="section">
+        <h2 class="section-title">¿Quién le debe a quién?</h2>
+        <div id="balances-list" class="balances-list"></div>
+        <div id="balances-empty" class="tx-empty">Agrega gastos para ver los balances.</div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ══ MODAL: CREAR EVENTO ══ -->
+  <div id="modal-event" class="modal-overlay" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Nuevo evento</h2>
+        <button class="btn-icon modal-close" data-modal="modal-event" aria-label="Cerrar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label class="field-label" for="input-event-name">Nombre del evento</label>
+          <input id="input-event-name" class="field-input" type="text" placeholder="Ej: Asado de fin de año" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label class="field-label" for="input-event-desc">Descripción (opcional)</label>
+          <input id="input-event-desc" class="field-input" type="text" placeholder="Ej: Casa de Pedro, diciembre 2024" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label class="field-label">Participantes</label>
+          <div class="participants-input">
+            <input id="input-participant" class="field-input" type="text" placeholder="Nombre del participante" autocomplete="off" />
+            <button class="btn-add-participant" id="btn-add-participant" aria-label="Agregar">+</button>
+          </div>
+          <div id="participants-chips" class="chips"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" data-modal="modal-event">Cancelar</button>
+        <button class="btn-primary" id="btn-save-event">Crear evento</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MODAL: AGREGAR MIEMBRO ══ -->
+  <div id="modal-member" class="modal-overlay" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Agregar participante</h2>
+        <button class="btn-icon modal-close" data-modal="modal-member" aria-label="Cerrar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label class="field-label" for="input-member-name">Nombre</label>
+          <input id="input-member-name" class="field-input" type="text" placeholder="Ej: María" autocomplete="off" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" data-modal="modal-member">Cancelar</button>
+        <button class="btn-primary" id="btn-save-member">Agregar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MODAL: AGREGAR TRANSACCIÓN ══ -->
+  <div id="modal-tx" class="modal-overlay" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Nuevo gasto</h2>
+        <button class="btn-icon modal-close" data-modal="modal-tx" aria-label="Cerrar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label class="field-label" for="tx-payer">¿Quién pagó?</label>
+          <select id="tx-payer" class="field-input field-select"></select>
+        </div>
+        <div class="field">
+          <label class="field-label" for="tx-amount">Monto ($)</label>
+          <input id="tx-amount" class="field-input" type="number" min="0" step="1" placeholder="0" />
+        </div>
+        <div class="field">
+          <label class="field-label" for="tx-desc">Descripción</label>
+          <input id="tx-desc" class="field-input" type="text" placeholder="Ej: Carne y bebidas" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label class="field-label" for="tx-date">Fecha</label>
+          <input id="tx-date" class="field-input" type="date" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" data-modal="modal-tx">Cancelar</button>
+        <button class="btn-primary" id="btn-save-tx">Guardar gasto</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast + Banner offline -->
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="offline-banner" class="offline-banner" hidden>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <line x1="1" y1="1" x2="23" y2="23"/>
+      <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/>
+      <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/>
+      <path d="M10.71 5.05A16 16 0 0 1 22.56 9"/>
+      <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/>
+      <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+      <line x1="12" y1="20" x2="12.01" y2="20"/>
+    </svg>
+    Sin conexión — los datos se guardan localmente
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
