@@ -2,12 +2,53 @@
 
 const CACHE_NAME = 'dividapp-v1';
 
+let firebaseMessaging = null;
+
+try {
+  importScripts('/firebase-config.js');
+
+  if (
+    self.DIVIDAPP_FIREBASE_CONFIG &&
+    self.DIVIDAPP_FIREBASE_CONFIG.apiKey &&
+    self.DIVIDAPP_FIREBASE_CONFIG.projectId &&
+    self.DIVIDAPP_FIREBASE_CONFIG.messagingSenderId &&
+    self.DIVIDAPP_FIREBASE_CONFIG.appId
+  ) {
+    importScripts('https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js');
+    importScripts('https://www.gstatic.com/firebasejs/10.12.5/firebase-messaging-compat.js');
+
+    firebase.initializeApp(self.DIVIDAPP_FIREBASE_CONFIG);
+    firebaseMessaging = firebase.messaging();
+
+    firebaseMessaging.onBackgroundMessage(payload => {
+      const title = payload.notification?.title || payload.data?.title || 'DividApp';
+      const body = payload.notification?.body || payload.data?.body || 'Tienes una actualización nueva.';
+      const url = payload.fcmOptions?.link || payload.data?.url || '/';
+
+      self.registration.showNotification(title, {
+        body,
+        icon: '/icons/icon-192.png',
+        badge: '/icons/icon-96.png',
+        vibrate: [100, 50, 100],
+        data: { url },
+        actions: [
+          { action: 'open', title: 'Abrir app' },
+          { action: 'dismiss', title: 'Cerrar' }
+        ]
+      });
+    });
+  }
+} catch (e) {
+  console.warn('Firebase Messaging no quedó inicializado en el SW:', e);
+}
+
 // Archivos que se cachean al instalar el SW
 const PRECACHE = [
   '/',
   '/index.html',
   '/styles.css',
   '/app.js',
+  '/firebase-config.js',
   '/manifest.json'
 ];
 
@@ -82,6 +123,7 @@ self.addEventListener('fetch', event => {
 // ─── PUSH ────────────────────────────────────────────────────────────────────
 // Recibe notificaciones push desde Firebase Cloud Messaging.
 self.addEventListener('push', event => {
+  if (firebaseMessaging) return;
   let data = { title: 'DividApp', body: 'Tienes una actualización nueva.' };
 
   if (event.data) {

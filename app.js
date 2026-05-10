@@ -383,12 +383,97 @@ window.addEventListener('offline', updateOnline);
 updateOnline();
 
 // ─── SERVICE WORKER ──────────────────────────────────────────────────────────
+let swRegistration = null;
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
-      .then(r => console.log('SW registrado:', r.scope))
+      .then(r => {
+        swRegistration = r;
+        console.log('SW registrado:', r.scope);
+        return navigator.serviceWorker.ready;
+      })
+      .then(r => {
+        swRegistration = r;
+      })
       .catch(e => console.warn('SW error:', e));
   });
+}
+
+// ─── PUSH NOTIFICATIONS ──────────────────────────────────────────────────────
+const pushButton = document.getElementById('btn-notification');
+
+function hasFirebaseConfig() {
+  const config = window.DIVIDAPP_FIREBASE_CONFIG;
+  return Boolean(
+    config &&
+    config.apiKey &&
+    config.projectId &&
+    config.messagingSenderId &&
+    config.appId &&
+    window.DIVIDAPP_FIREBASE_VAPID_KEY
+  );
+}
+
+function initFirebaseMessaging() {
+  if (!window.firebase || !firebase.messaging) {
+    throw new Error('Firebase Messaging no está disponible.');
+  }
+
+  if (!firebase.apps.length) {
+    firebase.initializeApp(window.DIVIDAPP_FIREBASE_CONFIG);
+  }
+
+  return firebase.messaging();
+}
+
+async function enablePushNotifications() {
+  if (!('Notification' in window) || !('PushManager' in window) || !('serviceWorker' in navigator)) {
+    toast('Este navegador no soporta push');
+    return;
+  }
+
+  if (!hasFirebaseConfig()) {
+    toast('Configura Firebase y VAPID primero');
+    console.warn('Faltan DIVIDAPP_FIREBASE_CONFIG o DIVIDAPP_FIREBASE_VAPID_KEY en firebase-config.js');
+    return;
+  }
+
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted') {
+    toast('Permiso de notificaciones denegado');
+    return;
+  }
+
+  try {
+    const registration = swRegistration || await navigator.serviceWorker.ready;
+    const messaging = initFirebaseMessaging();
+    const token = await messaging.getToken({
+      vapidKey: window.DIVIDAPP_FIREBASE_VAPID_KEY,
+      serviceWorkerRegistration: registration
+    });
+
+    if (!token) {
+      toast('No se pudo obtener token push');
+      return;
+    }
+
+    localStorage.setItem('dividapp_fcm_token', token);
+    console.log('FCM token:', token);
+    toast('Notificaciones activadas');
+
+    messaging.onMessage(payload => {
+      const title = payload.notification?.title || payload.data?.title || 'DividApp';
+      const body = payload.notification?.body || payload.data?.body || 'Tienes una actualización nueva.';
+      toast(`${title}: ${body}`);
+    });
+  } catch (e) {
+    console.warn('Error activando push:', e);
+    toast('Error activando notificaciones');
+  }
+}
+
+if (pushButton) {
+  pushButton.addEventListener('click', enablePushNotifications);
 }
 
 // ─── SHORTCUT: ?action=new ───────────────────────────────────────────────────
