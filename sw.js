@@ -5,7 +5,7 @@ const CACHE_NAME = 'dividapp-v1';
 let firebaseMessaging = null;
 
 try {
-  importScripts('/firebase-config.js');
+  importScripts('./firebase-config.js');
 
   if (
     self.DIVIDAPP_FIREBASE_CONFIG &&
