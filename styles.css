@@ -395,3 +395,5 @@ body {
   .home-main, .event-main { max-width: 540px; margin: 0 auto; width: 100%; }
   .app-header { padding: 0 max(20px, calc(50% - 270px)); }
 }
+
+[hidden] { display: none !important; }

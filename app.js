@@ -380,7 +380,7 @@ function updateOnline() {
 }
 window.addEventListener('online',  updateOnline);
 window.addEventListener('offline', updateOnline);
-updateOnline();
+document.addEventListener('DOMContentLoaded', updateOnline); // ← cambia esta línea
 
 // ─── SERVICE WORKER ──────────────────────────────────────────────────────────
 let swRegistration = null;
